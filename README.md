@@ -29,25 +29,66 @@ scripts/                 sync into a panel checkout; run the panel's own checks
 docs/COMPONENTS.md       what is replaced, what is restyled, and every deliberate departure
 ```
 
-## Installing it
+## Packaging it as a `.c7s.zip`
 
-The extension is meant to live at `backend-extensions/dev_lovinoes_shadcn/` in a panel checkout. From
-the panel repository root, with this repo cloned next to it:
+`panel-rs extensions export` is a subcommand of the panel's own binary, so producing an installable
+archive means building the panel once. That needs Rust (≥ 1.97), Node 24 and pnpm 11 — see
+[Development Environment](https://calagopus.com/docs/panel/extensions/dev-environment). A database is
+*not* needed to export; it is needed to run the panel afterwards.
 
 ```bash
+# 1. the extension belongs at this exact path inside a panel checkout
+git clone https://github.com/calagopus/panel.git && cd panel
 cp -r ../calagopus-shadcdn/backend-extensions/dev_lovinoes_shadcn backend-extensions/
-cd frontend && pnpm install && pnpm build:ci
+
+# 2. the pre-export checks
+cargo fmt && cargo clippy
+cd frontend && pnpm install && pnpm biome:fix-unsafe && pnpm build:ci && cd ..
+
+# 3. build the binary that does the exporting (the frontend build above is its prerequisite)
+SQLX_OFFLINE=true cargo build
+
+# 4. export
+SQLX_OFFLINE=true cargo run -- extensions export dev.lovinoes.shadcn
+# -> ./exported-extensions/dev_lovinoes_shadcn.c7s.zip
 ```
 
-Then export it the usual way — see
-[Getting your Extension ready](https://calagopus.com/docs/panel/extensions/getting-your-extension-ready):
+Windows works — the panel's extension CLI is explicitly Windows-aware, down to a `cfg(windows)`-only
+`junction` dependency it uses in place of symlinks. PowerShell has no inline environment-variable prefix,
+so steps 3 and 4 become:
 
-```bash
-panel-rs extensions export dev.lovinoes.shadcn
+```powershell
+$env:SQLX_OFFLINE = "true"
+cargo build
+cargo run -- extensions export dev.lovinoes.shadcn
 ```
 
-Rename the package by replacing `dev_lovinoes_shadcn` / `dev.lovinoes.shadcn` throughout
-(`Cargo.toml`, `Metadata.toml`, `src/lib.rs`, the directory name, and the paths in `scripts/`).
+Rust on Windows also needs the MSVC build tools, which `rustup` prompts for on install.
+
+`scripts/verify.ps1` already runs step 2's frontend half against a panel checkout, so if that passes,
+only the Rust half is left to confirm.
+
+Installing the archive needs a panel that can compile at install time — the `:heavy` or
+`:nightly-heavy` Docker image, or a dev environment. Drop it into **Admin → Extensions**, or copy it to
+`./build/extensions/` and `docker compose restart web`. See
+[Installing Extensions](https://calagopus.com/docs/panel/extensions/installing-extensions).
+
+Note that the plain **binary** install, which is the one that runs natively on Windows, explicitly does
+not support extensions — only the heavy Docker images and dev environments do. On Windows that means
+Docker Desktop, where the panel container is Linux anyway.
+
+### Two things that will bite on a first export
+
+- **`panel_version` in `Metadata.toml` is `>=1.2.3`**, the version this was built against. The panel
+  checks it on install and the requirement has to admit the installing panel, so bump it if you are
+  exporting from a newer checkout.
+- **The package name is baked into four places.** To rename, replace `dev_lovinoes_shadcn` and
+  `dev.lovinoes.shadcn` throughout: the directory name, `Cargo.toml`'s `[package] name`,
+  `Metadata.toml`'s `package_name`, the log line in `src/lib.rs`, and the paths in `scripts/`. The
+  identifier has to stay `<tld>.<author>.<name>` or the panel rejects the archive.
+
+The exporter reads the extension directory directly and already skips `node_modules` and
+`frontend/tsconfig.json`, so there is nothing to clean up first.
 
 ## How it works
 
