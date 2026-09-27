@@ -44,6 +44,15 @@
  * components do not depend on the panel happening to emit a keyframe they need.
  */
 @theme {
+  /*
+   * Tailwind's spacing base. Normally the host page defines it, and the panel does — but this stylesheet
+   * imports Tailwind's theme by reference rather than emitting it, and a few utilities reference
+   * `--spacing` with no literal fallback: `tw-animate-css`'s `slide-in-from-*-2`, which every popover,
+   * dropdown, tooltip and select entrance animation uses. Defining it here costs one declaration and
+   * stops the components depending on what the page around them happens to define.
+   */
+  --spacing: 0.25rem;
+
   --animate-sc-progress: sc-progress 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 
   @keyframes sc-progress {

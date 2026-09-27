@@ -67,7 +67,7 @@ function ShadcnAlert({
       className={cn(
         // Same class string as ui/alert.tsx's `Alert`, applied through Box so Mantine style props work.
         'relative grid w-full grid-cols-[0_1fr] items-start gap-y-0.5 rounded-lg border border-border px-4 py-3 text-sm',
-        'has-[>svg]:grid-cols-[calc(var(--spacing)*4)_1fr] has-[>svg]:gap-x-3 [&>svg]:size-4 [&>svg]:translate-y-0.5',
+        'has-[>svg]:grid-cols-[1rem_1fr] has-[>svg]:gap-x-3 [&>svg]:size-4 [&>svg]:translate-y-0.5',
         alertVariantFor(variant, color) === 'destructive' && 'bg-card text-destructive',
         alertVariantFor(variant, color) === 'tinted' && 'border-primary/30 bg-primary/10 text-foreground',
         alertVariantFor(variant, color) === 'default' && 'bg-card text-card-foreground',

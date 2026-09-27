@@ -5,7 +5,7 @@ Tailwind classes, CVA variants — rather than restyling Mantine to look like th
 
 The panel runs on Mantine 9. Everything a page renders goes through `frontend/src/elements/**`, and 105
 of those wrappers are *hookable*: `replaceBaseComponent()` swaps the implementation for every import site
-at once. This extension swaps 51 of them, keeps the rest on Mantine with a full token bridge underneath,
+at once. This extension swaps 54 of them, keeps the rest on Mantine with a full token bridge underneath,
 and never forks the panel.
 
 [calagopus/panel#140](https://github.com/calagopus/panel/pull/140), the existing draft, is the other
@@ -118,16 +118,25 @@ project renders in and costs no download. For Geist or Inter, add the webfont to
 ## Status
 
 Verified: `biome check` clean, `tsc` clean, and a full production build of the panel frontend with the
-extension compiled in. The component gallery renders in both colour schemes.
+extension compiled in. The component gallery was driven in the browser in both colour schemes — the
+combobox opens, groups, filters and moves its selection with the arrow keys.
 
 Not verified: **the panel has never been run against this.** There is no Rust toolchain, Postgres or
 Redis on the machine this was built on, so the backend half of the extension is authored but never
-compiled, and no page has been clicked through. Install it on a real panel before trusting it.
+compiled, and no real page has been clicked through. Install it on a panel before trusting it.
 
-The combobox family — `Select`, `MultiSelect`, `Autocomplete`, `TagsInput` — was in the agreed scope and
-is **not** replaced; it is restyled instead. The reasoning is in
-[docs/COMPONENTS.md](docs/COMPONENTS.md#restyled-still-rendered-by-mantine). It is the one place the
-delivered scope is narrower than planned, and it is the obvious next piece of work.
+The date and time pickers, and the layout and typography primitives, stay on Mantine and are restyled
+rather than replaced. [docs/COMPONENTS.md](docs/COMPONENTS.md) lists every one with the reason, along
+with each place a replacement behaves differently from the original on purpose.
+
+### A thing to watch when extending this
+
+The extension imports Tailwind's theme *by reference* rather than emitting it, because the panel already
+has one. Generated utilities carry a literal fallback and are safe, but a **hand-written arbitrary value**
+does not: `grid-cols-[calc(var(--spacing)*4)_1fr]`, straight from shadcn's Alert, silently collapsed the
+icon column because `--spacing` was only defined by the page around it. Prefer a literal in arbitrary
+values, or define the variable in the `@theme` block in `app.css` as it now does for `--spacing`. The
+scan that finds these is a grep of the built CSS chunk for `var(--…)` with no comma.
 
 ## Elsewhere
 

@@ -1,4 +1,5 @@
 import { registerButtonReplacements } from './replacements/buttons.tsx';
+import { registerComboboxReplacements } from './replacements/comboboxes.tsx';
 import { registerDataDisplayReplacements } from './replacements/dataDisplay.tsx';
 import { registerFeedbackReplacements } from './replacements/feedback.tsx';
 import { registerNavigationReplacements } from './replacements/navigation.tsx';
@@ -17,6 +18,7 @@ export function registerShadcnComponents(): void {
   registerButtonReplacements();
   registerTextInputReplacements();
   registerToggleReplacements();
+  registerComboboxReplacements();
   registerDataDisplayReplacements();
   registerFeedbackReplacements();
   registerOverlayReplacements();

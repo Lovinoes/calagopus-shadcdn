@@ -18,12 +18,26 @@ adapters in `frontend/src/lib/mantine/` do the translation.
 | Buttons | `Button`, `ActionIcon`, `CloseButton` |
 | Text inputs | `TextInput`, `TextArea`, `PasswordInput`, `NumberInput` |
 | Toggles | `Checkbox`, `Switch` |
+| Comboboxes | `Select`, `MultiSelect`, `Autocomplete` |
 | Data display | `Card`, `Badge`, `Avatar`, `ThemeIcon`, `Breadcrumbs`, `TitleCard`, `Code`, `Kbd`, `KbdKey` |
 | Feedback | `Alert`, `AlertError`, `Notification`, `Progress`, `Spinner` (+ `.Centered`, `.Suspense`), `EmptyState`, `ScreenBlock` |
 | Overlays | `Modal`, `ModalFooter`, `Drawer`, `Tooltip`, `ConditionalTooltip`, `Menu` (+ `.Target`, `.Dropdown`, `.Item`, `.Label`, `.Divider`), `Popover` (+ `.Target`, `.Dropdown`) |
 | Navigation | `Tabs` (+ `.List`, `.Tab`, `.Panel`), `NavLink`, `SegmentedControl`, `Collapse` |
 
-That is 40 exported components, 51 counting subcomponents.
+That is 43 exported components, 54 counting subcomponents.
+
+The comboboxes are the most involved of them, built on Radix's Popover with [cmdk](https://cmdk.paco.me)
+doing grouping and keyboard navigation — the same pair shadcn's own combobox uses. Three details were
+load-bearing:
+
+- **`data` is parsed by Mantine, not by us.** It arrives as `string[]`, `ComboboxItem[]` or groups of
+  either, interchangeably, across 132 call sites. `lib/mantine/comboboxData.ts` hands it to Mantine's
+  exported `getParsedComboboxData` / `getOptionsLockup` / `defaultOptionsFilter`, so it behaves
+  identically and keeps up if Mantine changes.
+- **`filter` and `searchValue` / `onSearchChange` still work.** `elements/input/ServerSelect.tsx` and
+  `ServerMultiSelect.tsx` pass `filter={({ options }) => options}` and drive the search themselves so the
+  *server* filters. cmdk therefore runs with `shouldFilter={false}` and filtering happens outside it.
+- **`renderOption` is honoured**, because six files use it.
 
 Compound components are always replaced as a set. `Menu.Target` reads a context that `Menu` provides,
 and so does Radix's trigger; replacing only the root would leave the parts looking for a context that is
@@ -36,8 +50,8 @@ bottom of `frontend/src/app.css`.
 
 | Component | Why |
 | --- | --- |
-| `Select`, `MultiSelect`, `Autocomplete`, `TagsInput` | Mantine's `Combobox` is a keyboard, focus and filtering machine behind 123 call sites, with grouped data, `searchable`, `clearable`, `renderOption` and form-resolver integration. Reimplementing it is where a reskin most easily turns into a regression, and the CSS gets them visually consistent because Mantine's Select *is* a Mantine `Input` underneath — the same `--mantine-color-*` variables the bridge already retargets. **This is the one place the delivered scope is narrower than planned; see the README.** |
-| `DatePicker`, `DateTimePicker`, `TimeInput`, `TimePicker`, `YearPicker` | `@mantine/dates`, same reasoning. The calendar surface, selected day and header controls are restyled. |
+| `TagsInput` | Nothing to replace. `elements/input/TagsInput.tsx` never used Mantine's TagsInput — it is a bespoke component built out of `TextInput`, `Button`, `ActionIcon`, `Card` and `Menu`, all of which *are* replaced, so it already renders as shadcn. Only its `Input.Label` / `Input.Description` / `Input.Error` come from Mantine, and the CSS covers those. |
+| `DatePicker`, `DateTimePicker`, `TimeInput`, `TimePicker`, `YearPicker` | `@mantine/dates`. Each is a combobox-like field wrapped around a calendar with its own date arithmetic, locale handling and range logic; the field chrome, calendar surface, selected day and header controls are restyled instead. |
 | `PinInput`, `FileInput`, `JsonInput` | Low reach, and each wraps a Mantine input whose chrome the CSS already covers. |
 | `Box`, `Group`, `Stack`, `Flex`, `Center`, `Container`, `Paper`, `Divider`, `ScrollArea`, `List`, `Text`, `Title`, `Anchor`, `Timeline` | Layout and typography primitives. Replacing them means reimplementing Mantine's 54 style props across ~900 page files for no visual gain; they are already styleless or purely token-driven. |
 | `UnstyledButton` | Has no styling to replace. |
@@ -71,6 +85,14 @@ Things that behave or look differently on purpose. Everything else keeps the ori
   stackId}` straight through, which the replacement honours; Radix stacks portals by DOM order anyway.
 - **`Menu` has no hover trigger.** Radix's dropdown is click-only. Nothing in the panel sets
   `trigger='hover'`.
+- **`Select` and `MultiSelect` render a button, not an input.** Mantine's trigger is a read-only `<input>`;
+  a button is what the keyboard and screen-reader behaviour actually want for a picker. The forwarded
+  `ref` and the `name`/`value` pair go to a hidden input beside it, which is what Mantine does for form
+  submission anyway (`hiddenInputProps`), so posting a form still works. Nothing in the panel passes a
+  `ref` to any of the three. `Autocomplete` is unaffected — it is text-first, so its field stays a real
+  input and the ref goes straight to it.
+- **`comboboxProps.withinPortal` is ignored.** The panel only ever sets that one field, and Radix always
+  portals its popovers, which is the behaviour that survives being nested inside a modal or a drawer.
 - **Responsive style props are dropped on the handful of components whose root is a Radix primitive**
   (`Menu.Dropdown`, `Popover.Dropdown`, `Modal`, `Drawer`, `Tabs`). The flat form works; the responsive
   object form needs a generated class and a `<style>` element, which is `Box`'s job. Nothing in the panel

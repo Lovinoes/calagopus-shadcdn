@@ -1,19 +1,20 @@
 /*
- * The extension's own stylesheet, plus the two things the panel would otherwise be providing:
+ * The harness has to stand in for the panel faithfully, or it flatters the theme. The panel's own
+ * `app.css` does a full `@import "tailwindcss"`, so the page already has Tailwind's theme variables and
+ * its preflight before the extension's stylesheet loads; that is what the first line reproduces.
  *
- *   - Tailwind's preflight. The panel's `app.css` does a full `@import "tailwindcss"`, so the reset is
- *     already on the page there; the extension must not ship its own copy of it. This harness has no
- *     panel underneath it, so without this line a `<button>` keeps its user-agent grey and the ghost and
- *     outline variants look wrong.
- *   - A second pass of utilities scoped to the harness, so the gallery's own markup gets classes too.
- *     `source(".")` inside the extension's app.css stays relative to that file and keeps scanning the
- *     extension.
+ * It matters more than it looks. The extension imports Tailwind's theme *by reference* — it must not
+ * ship a duplicate into a panel that already has one — so any utility whose value Tailwind cannot inline
+ * compiles to an undefined variable and is dropped silently. `max-w-sm` becomes
+ * `max-width: var(--container-sm)`, with no fallback, and simply does nothing.
+ *
+ * Only the first `@tailwind utilities` in a stylesheet survives, so this one pass has to cover both
+ * source trees: `source(…)` points it at the extension, and `@source` adds the gallery.
  */
-@layer theme, base, components, utilities;
+@import "tailwindcss" source("../../backend-extensions/dev_lovinoes_shadcn/frontend/src");
+@source "./";
 
-@import "tailwindcss/preflight.css" layer(base);
 @import "../../backend-extensions/dev_lovinoes_shadcn/frontend/src/app.css";
-@import "tailwindcss/utilities.css" source(".");
 
 body {
   margin: 0;

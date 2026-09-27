@@ -62,7 +62,10 @@ export function Switch({
         aria-hidden='true'
         data-slot='switch-thumb'
         className={cn(
-          'pointer-events-none absolute left-0.5 block rounded-full bg-background ring-0 transition-transform',
+          // `top-1/2 -translate-y-1/2` rather than relying on the flex parent: an absolutely positioned
+          // child is not laid out by `items-center`, so without this the thumb sits proud of the track
+          // by half the difference between the two heights — obvious at `lg`.
+          'pointer-events-none absolute top-1/2 left-0.5 block -translate-y-1/2 rounded-full bg-background ring-0 transition-transform',
           'dark:bg-foreground dark:peer-checked:bg-primary-foreground',
           THUMB_SIZES[size],
           thumbClassName,

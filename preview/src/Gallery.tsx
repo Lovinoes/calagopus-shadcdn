@@ -1,4 +1,12 @@
-import { CheckIcon, PlusIcon, SearchIcon, SettingsIcon, TrashIcon, TriangleAlertIcon } from 'lucide-react';
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  PlusIcon,
+  SearchIcon,
+  SettingsIcon,
+  TrashIcon,
+  TriangleAlertIcon,
+} from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@ext/ui/alert.tsx';
 import {
@@ -25,6 +33,7 @@ import {
 } from '@ext/ui/card.tsx';
 import { Checkbox } from '@ext/ui/checkbox.tsx';
 import { Collapse } from '@ext/ui/collapse.tsx';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@ext/ui/command.tsx';
 import {
   Dialog,
   DialogContent,
@@ -44,11 +53,7 @@ import {
 import { Input } from '@ext/ui/input.tsx';
 import { Kbd, KbdKey } from '@ext/ui/kbd.tsx';
 import { Label } from '@ext/ui/label.tsx';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@ext/ui/popover.tsx';
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from '@ext/ui/popover.tsx';
 import { Progress } from '@ext/ui/progress.tsx';
 import { Spinner } from '@ext/ui/spinner.tsx';
 import { Switch } from '@ext/ui/switch.tsx';
@@ -76,6 +81,21 @@ export function Gallery() {
   const [switched, setSwitched] = useState(true);
   const [open, setOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [comboOpen, setComboOpen] = useState(false);
+  const [egg, setEgg] = useState<string | null>('paper');
+  const [search, setSearch] = useState('');
+
+  const eggs = [
+    { group: 'Minecraft', items: [{ value: 'paper', label: 'Paper' }, { value: 'vanilla', label: 'Vanilla' }] },
+    { group: 'Source', items: [{ value: 'csgo', label: 'CS:GO' }, { value: 'gmod', label: 'Garry’s Mod' }] },
+  ];
+  const eggGroups = eggs
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.label.toLowerCase().includes(search.toLowerCase())),
+    }))
+    .filter((group) => group.items.length > 0);
+  const eggLabel = eggs.flatMap((group) => group.items).find((item) => item.value === egg)?.label;
 
   return (
     <div className='mx-auto flex max-w-5xl flex-col gap-8 px-4 py-10'>
@@ -335,6 +355,61 @@ export function Gallery() {
           <Kbd>Space</Kbd> for actions
         </span>
         <KbdKey>Esc</KbdKey>
+      </Section>
+
+      <Section title='Combobox — what Select renders'>
+        <div className='flex w-full max-w-sm flex-col gap-1.5'>
+          <Label>Egg</Label>
+          <Popover open={comboOpen} onOpenChange={setComboOpen}>
+            <PopoverAnchor asChild>
+              <div className='relative'>
+                <button
+                  type='button'
+                  role='combobox'
+                  aria-expanded={comboOpen}
+                  onClick={() => setComboOpen((value) => !value)}
+                  className='flex h-9 w-full min-w-0 items-center rounded-md border border-input bg-transparent px-3 pr-9 text-left text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30'
+                >
+                  <span className={eggLabel ? 'min-w-0 flex-1 truncate' : 'min-w-0 flex-1 truncate text-muted-foreground'}>
+                    {eggLabel ?? 'Pick an egg'}
+                  </span>
+                </button>
+                <div className='pointer-events-none absolute inset-y-0 right-0 flex w-9 items-center justify-center'>
+                  <ChevronDownIcon className='size-4 opacity-50' />
+                </div>
+              </div>
+            </PopoverAnchor>
+            <PopoverContent align='start' className='w-(--radix-popover-trigger-width) p-0'>
+              <Command shouldFilter={false}>
+                <CommandInput value={search} onValueChange={setSearch} placeholder='Search…' />
+                <CommandList>
+                  {eggGroups.length === 0 ? <CommandEmpty>No results</CommandEmpty> : null}
+                  {eggGroups.map((group) => (
+                    <CommandGroup key={group.group} heading={group.group}>
+                      {group.items.map((item) => (
+                        <CommandItem
+                          key={item.value}
+                          value={item.value}
+                          className='justify-between'
+                          onSelect={() => {
+                            setEgg(item.value);
+                            setComboOpen(false);
+                          }}
+                        >
+                          <span className='min-w-0 truncate'>{item.label}</span>
+                          {egg === item.value ? <CheckIcon className='size-4 shrink-0' /> : null}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ))}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+          <p className='text-xs text-muted-foreground'>
+            Radix Popover anchored to the field, with cmdk doing grouping and keyboard navigation.
+          </p>
+        </div>
       </Section>
 
       <Section title='Collapse'>
