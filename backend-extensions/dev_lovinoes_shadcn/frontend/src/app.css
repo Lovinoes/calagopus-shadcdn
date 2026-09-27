@@ -1,0 +1,490 @@
+/*
+ * shadcn/ui token layer for the Calagopus panel.
+ *
+ * Three things happen in this file:
+ *
+ *   1. Tailwind is wired up for *this extension's* source tree, so the shadcn components in `src/ui`
+ *      compile their utility classes into this stylesheet (which the build already splits into its own
+ *      chunk so it can be switched off with the extension).
+ *   2. The shadcn design tokens are defined, scoped to the panel's `data-mantine-color-scheme`
+ *      attribute instead of shadcn's usual `.dark` class.
+ *   3. Mantine's own semantic variables are pointed at those tokens, so every part of the panel this
+ *      extension does *not* replace with a shadcn component still matches it.
+ *
+ * Two deliberate departures from a stock shadcn setup, both forced by sharing a page with Mantine:
+ *
+ *   - `tailwindcss/utilities.css` is imported *without* `layer(utilities)`. Mantine's stylesheet is
+ *     unlayered, and for normal declarations unlayered CSS beats anything in a cascade layer no matter
+ *     the specificity. Mantine's global `input, button, textarea, select { font: inherit }` would
+ *     otherwise win over `text-sm` on every button we render. (The panel's own code works around the
+ *     same collision with `!` utilities, e.g. `font-semibold!` in `elements/data-display/Badge.tsx`.)
+ *     Ours are unlayered too, so plain class selectors beat Mantine's element selectors as usual.
+ *   - There is no `@layer base { * { border-color: var(--border) } }`. shadcn relies on that global to
+ *     colour any bare `border` utility, but here it would also outrank the *panel's* layered
+ *     `border-…` utilities and recolour borders on pages this extension never touches. The components
+ *     in `src/ui` carry an explicit `border-border` instead, which tailwind-merge can then drop when a
+ *     caller passes its own border colour.
+ *
+ * Token values are shadcn's `zinc` base colour verbatim from its registry, with `--primary`, `--ring`
+ * and `--sidebar-primary` moved to Tailwind blue (600 on light, 500 on dark) to stay close to the
+ * panel's existing accent. Following shadcn's own blue theme, dark mode puts dark text on the blue
+ * rather than white: blue-500 with white is only 3.8:1, with zinc-900 it is 4.8:1.
+ */
+
+@import "tailwindcss/theme.css" theme(reference);
+@import "tailwindcss/utilities.css" source(".");
+@import "tw-animate-css";
+
+/* The panel toggles schemes with an attribute on <html>, not shadcn's `.dark` class. */
+@custom-variant dark (&:where([data-mantine-color-scheme="dark"], [data-mantine-color-scheme="dark"] *));
+@custom-variant light (&:where([data-mantine-color-scheme="light"], [data-mantine-color-scheme="light"] *));
+
+/*
+ * Animations owned by this extension. Defined here rather than reused from the panel's `app.css` so the
+ * components do not depend on the panel happening to emit a keyframe they need.
+ */
+@theme {
+  --animate-sc-progress: sc-progress 1.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+
+  @keyframes sc-progress {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.625rem;
+}
+
+:root[data-mantine-color-scheme="light"] {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.546 0.245 262.881);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --success: oklch(0.627 0.194 149.214);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.666 0.179 58.318);
+  --warning-foreground: oklch(0.985 0 0);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.546 0.245 262.881);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-primary: oklch(0.546 0.245 262.881);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.546 0.245 262.881);
+}
+
+:root[data-mantine-color-scheme="dark"] {
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.623 0.214 259.815);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.141 0.005 285.823);
+  --success: oklch(0.792 0.209 151.711);
+  --success-foreground: oklch(0.141 0.005 285.823);
+  --warning: oklch(0.828 0.189 84.429);
+  --warning-foreground: oklch(0.141 0.005 285.823);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.623 0.214 259.815);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.623 0.214 259.815);
+  --sidebar-primary-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.623 0.214 259.815);
+}
+
+/*
+ * Mantine bridge.
+ *
+ * `:root` is doubled on purpose. Mantine resolves its theme into a `<style>` element rendered inside
+ * the React tree (see convert-css-variables in @mantine/core), so its `:root[data-mantine-color-scheme]`
+ * rules come later in the document than this stylesheet and win at equal specificity. Repeating `:root`
+ * raises us from (0,2,0) to (0,3,0) so the bridge holds regardless of chunk order.
+ */
+:root:root[data-mantine-color-scheme="light"],
+:root:root[data-mantine-color-scheme="dark"] {
+  --mantine-color-body: var(--background);
+  --mantine-color-text: var(--foreground);
+  --mantine-color-bright: var(--foreground);
+  --mantine-color-dimmed: var(--muted-foreground);
+  --mantine-color-placeholder: var(--muted-foreground);
+  --mantine-color-default: var(--card);
+  --mantine-color-default-color: var(--foreground);
+  --mantine-color-default-hover: var(--accent);
+  --mantine-color-default-border: var(--border);
+  --mantine-color-disabled: var(--muted);
+  --mantine-color-disabled-color: var(--muted-foreground);
+  --mantine-color-disabled-border: var(--border);
+  --mantine-color-error: var(--destructive);
+  --mantine-color-success: var(--success);
+  --mantine-color-anchor: var(--primary);
+
+  /*
+   * Chart colours are plain variables in the panel's app.css rather than part of the Mantine theme.
+   * `theme/cssVariablesResolver.ts` derives the series from the resolved palette and overrides these
+   * when this extension owns the resolver; these values are the fallback for when it does not.
+   */
+  --chart-grid-color: var(--border);
+  --chart-tick-color: var(--muted-foreground);
+  --chart-series-1: var(--chart-1);
+  --chart-series-2: var(--chart-3);
+  --chart-series-3: var(--chart-4);
+  --chart-series-4: var(--chart-2);
+
+  /* Mantine's Table reads these directly, and Table is exported bare so it cannot be replaced. */
+  --table-border-color: var(--border);
+  --table-hover-color: var(--accent);
+  --table-striped-color: color-mix(in oklab, var(--muted) 45%, transparent);
+  --table-highlight-on-hover-color: var(--accent);
+}
+
+/*
+ * ---------------------------------------------------------------------------------------------------
+ * The components that stay on Mantine.
+ * ---------------------------------------------------------------------------------------------------
+ *
+ * Not every element is swapped for a shadcn one. docs/COMPONENTS.md has the full list and the reasoning;
+ * the short version is the combobox family (Select, MultiSelect, Autocomplete, TagsInput), the date and
+ * time pickers, and Table / StatCard / ContentContainer, which are exported bare and so cannot be
+ * replaced at all. Those still have to look like they belong, which is what the rest of this file does.
+ *
+ * `!important` throughout, and not out of laziness. Mantine's stylesheet is unlayered and its component
+ * rules have the same specificity as ours, so which one wins comes down to the order the two CSS chunks
+ * happen to load — which is not something an extension controls. The panel's own code reaches for the
+ * same tool for the same reason (`font-semibold!` in `elements/data-display/Badge.tsx`).
+ *
+ * Selectors use Mantine's static `mantine-<Component>-<slot>` classes, which `MantineProvider` emits by
+ * default. A selector that stops matching costs a little polish; it cannot break a page.
+ */
+
+/* Input surfaces: the shadcn field, for every control still rendered by Mantine. */
+:where([class*="mantine-"][class*="-input"]) {
+  border-color: var(--input) !important;
+  border-radius: var(--radius-md) !important;
+  background-color: transparent !important;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+  color: var(--foreground) !important;
+  transition:
+    color 150ms,
+    box-shadow 150ms,
+    border-color 150ms !important;
+}
+
+:root[data-mantine-color-scheme="dark"] :where([class*="mantine-"][class*="-input"]) {
+  background-color: color-mix(in oklab, var(--input) 30%, transparent) !important;
+}
+
+/* shadcn's focus treatment: the border turns to the ring colour and a soft 3px halo appears. */
+:where([class*="mantine-"][class*="-input"]):focus,
+:where([class*="mantine-"][class*="-input"]):focus-within {
+  border-color: var(--ring) !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent) !important;
+  outline: none !important;
+}
+
+:where([class*="mantine-"][class*="-input"])[aria-invalid="true"],
+:where([class*="mantine-"][class*="-input"])[data-error="true"] {
+  border-color: var(--destructive) !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent) !important;
+}
+
+/* Field chrome: label, description, error. Matches lib/mantine/InputChrome.tsx. */
+:where([class*="mantine-"][class*="-label"]):not([class*="-groupLabel"]) {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+:where([class*="mantine-"][class*="-description"]) {
+  font-size: 0.75rem !important;
+  color: var(--muted-foreground) !important;
+}
+
+:where([class*="mantine-"][class*="-error"]) {
+  font-size: 0.75rem !important;
+  color: var(--destructive) !important;
+}
+
+:where([class*="mantine-"][class*="-required"]) {
+  color: var(--destructive) !important;
+}
+
+/* Dropdowns: the popover surface shadcn uses for its own select and command menus. */
+:where([class*="mantine-"][class*="-dropdown"]) {
+  border-color: var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  background-color: var(--popover) !important;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  color: var(--popover-foreground) !important;
+  padding: 0.25rem !important;
+}
+
+:where([class*="mantine-"][class*="-option"]) {
+  border-radius: calc(var(--radius) * 0.6) !important;
+  font-size: 0.875rem !important;
+  padding: 0.375rem 0.5rem !important;
+}
+
+:where([class*="mantine-"][class*="-option"])[data-combobox-selected],
+:where([class*="mantine-"][class*="-option"])[data-combobox-active],
+:where([class*="mantine-"][class*="-option"]):hover:not([data-combobox-disabled]) {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+:where([class*="mantine-"][class*="-groupLabel"]) {
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  color: var(--muted-foreground) !important;
+  padding: 0.375rem 0.5rem !important;
+}
+
+:where([class*="mantine-"][class*="-empty"]) {
+  font-size: 0.875rem !important;
+  color: var(--muted-foreground) !important;
+  padding: 0.5rem !important;
+}
+
+/* Pills, which MultiSelect and TagsInput render for each selected value — shadcn's secondary badge. */
+:where(.mantine-Pill-root) {
+  border-radius: 9999px !important;
+  background-color: var(--secondary) !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  color: var(--secondary-foreground) !important;
+}
+
+/* Paper, which Mantine uses for most bare surfaces. */
+:where(.mantine-Paper-root) {
+  border-radius: var(--radius) !important;
+  background-color: var(--card) !important;
+  color: var(--card-foreground) !important;
+}
+
+:where(.mantine-Paper-root)[data-with-border] {
+  border-color: var(--border) !important;
+}
+
+:where(.mantine-Divider-root) {
+  border-color: var(--border) !important;
+}
+
+:where(.mantine-Divider-label) {
+  font-size: 0.75rem !important;
+  color: var(--muted-foreground) !important;
+}
+
+/*
+ * Table. `elements/data-display/Table.tsx` is exported without `makeComponentHookable`, so CSS is the
+ * only lever there is. The look is shadcn's table: a muted header row in medium weight, rows separated
+ * by a single border, and a hover surface from `--accent`.
+ */
+:where(.mantine-Table-th) {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: var(--muted-foreground) !important;
+}
+
+:where(.mantine-Table-thead) {
+  border-bottom: 1px solid var(--border) !important;
+}
+
+:where(.mantine-Table-td) {
+  font-size: 0.875rem !important;
+}
+
+/* Stepper, used by the out-of-box-experience router. */
+:where(.mantine-Stepper-stepIcon) {
+  border-color: var(--border) !important;
+  background-color: var(--muted) !important;
+  color: var(--muted-foreground) !important;
+}
+
+:where(.mantine-Stepper-stepIcon)[data-progress],
+:where(.mantine-Stepper-stepIcon)[data-completed] {
+  border-color: var(--primary) !important;
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+:where(.mantine-Stepper-separator) {
+  background-color: var(--border) !important;
+}
+
+:where(.mantine-Stepper-stepLabel) {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+:where(.mantine-Stepper-stepDescription) {
+  font-size: 0.75rem !important;
+  color: var(--muted-foreground) !important;
+}
+
+/* Pagination, which the table footer renders. */
+:where(.mantine-Pagination-control) {
+  border-color: var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  font-size: 0.875rem !important;
+}
+
+:where(.mantine-Pagination-control)[data-active] {
+  border-color: var(--primary) !important;
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+/* Timeline. */
+:where(.mantine-Timeline-itemBullet) {
+  border-color: var(--border) !important;
+  background-color: var(--card) !important;
+  color: var(--foreground) !important;
+}
+
+:where(.mantine-Timeline-itemBullet)[data-active] {
+  border-color: var(--primary) !important;
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+:where(.mantine-Timeline-itemTitle) {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+/* Scrollbars, for Mantine's ScrollArea. */
+:where(.mantine-ScrollArea-thumb) {
+  background-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent) !important;
+}
+
+:where(.mantine-ScrollArea-scrollbar) {
+  background-color: transparent !important;
+}
+
+/* Mantine's own spinner, which a few places use directly. */
+:where(.mantine-Loader-root) {
+  color: var(--primary) !important;
+}
+
+/* The calendar inside the date pickers. */
+:where([class*="mantine-"][class*="-day"])[data-selected] {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+:where([class*="mantine-"][class*="-day"]):hover:not([data-selected]):not([data-disabled]) {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+:where([class*="mantine-"][class*="-weekday"]) {
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  color: var(--muted-foreground) !important;
+}
+
+:where([class*="mantine-"][class*="-calendarHeaderLevel"]),
+:where([class*="mantine-"][class*="-calendarHeaderControl"]) {
+  border-radius: var(--radius-md) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+:where([class*="mantine-"][class*="-calendarHeaderLevel"]):hover,
+:where([class*="mantine-"][class*="-calendarHeaderControl"]):hover {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}

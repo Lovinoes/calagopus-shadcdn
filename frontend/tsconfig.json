@@ -1,0 +1,14 @@
+{
+  "//": "Compatibility stub. The extension's frontend/tsconfig.json extends ../../../frontend/tsconfig.json, which is the panel's config once the extension is installed into a panel checkout. This repo is not a panel checkout, so that path would not resolve and any tool walking up from an extension source file — an editor, or the preview app's bundler — would fail. These options mirror the panel's own tsconfig; the panel's copy takes over when the extension is synced into one.",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "target": "esnext",
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true,
+    "resolvePackageJsonExports": true
+  }
+}

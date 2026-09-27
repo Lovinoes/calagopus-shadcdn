@@ -1,2 +1,6 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Source files must keep LF on checkout: the panel's Biome config pins lineEnding to lf, and a CRLF
+# working copy makes `pnpm biome:validate` fail on every file.
+* text=auto eol=lf
+*.png binary
+*.woff binary
+*.woff2 binary

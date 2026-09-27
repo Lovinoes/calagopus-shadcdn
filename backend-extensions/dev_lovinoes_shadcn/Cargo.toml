@@ -1,0 +1,11 @@
+[package]
+name = "dev_lovinoes_shadcn"
+description = "Reskins the Calagopus panel with real shadcn/ui components."
+authors = ["Lovinoes"]
+version = "1.0.0"
+edition = { workspace = true }
+
+[dependencies]
+shared = { workspace = true }
+async-trait = { workspace = true }
+tracing = { workspace = true }

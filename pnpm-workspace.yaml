@@ -1,0 +1,8 @@
+# Installs at the repo root on purpose: the extension's own sources live outside `preview/`, and Node
+# resolution walks up from the importing file. With node_modules here, `src/ui/*` resolves radix-ui,
+# lucide-react and the rest whether it is being bundled by the preview app or by a panel checkout.
+#
+# pnpm 11 reads build-script approvals from this file rather than from package.json.
+allowBuilds:
+  "@tailwindcss/oxide": true
+  esbuild: true

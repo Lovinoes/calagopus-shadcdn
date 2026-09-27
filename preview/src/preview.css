@@ -1,0 +1,24 @@
+/*
+ * The extension's own stylesheet, plus the two things the panel would otherwise be providing:
+ *
+ *   - Tailwind's preflight. The panel's `app.css` does a full `@import "tailwindcss"`, so the reset is
+ *     already on the page there; the extension must not ship its own copy of it. This harness has no
+ *     panel underneath it, so without this line a `<button>` keeps its user-agent grey and the ghost and
+ *     outline variants look wrong.
+ *   - A second pass of utilities scoped to the harness, so the gallery's own markup gets classes too.
+ *     `source(".")` inside the extension's app.css stays relative to that file and keeps scanning the
+ *     extension.
+ */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/preflight.css" layer(base);
+@import "../../backend-extensions/dev_lovinoes_shadcn/frontend/src/app.css";
+@import "tailwindcss/utilities.css" source(".");
+
+body {
+  margin: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif;
+}
